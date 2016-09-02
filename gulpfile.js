@@ -17,19 +17,19 @@ var gulp   					= require('gulp'),
 	 기본(Default) & 관찰(Watch) 업무 정의
 	 clean > styles > scripts 순으로 업무 실행
 */
-gulp.task('default', ['clean', 'styles', 'scripts']);
+gulp.task('default', ['clean', 'styles', 'scripts', 'watch']);
 
 // 지속적 관찰(Watch) 업무 정의 ('clean'생략가능)
 // gulp.task('watch', 'clean', function() {
 gulp.task('watch', function() {
-	gulp.watch( config.path.css.src, ['styles'] );
+	gulp.watch( config.path.css.watchSrc, ['styles'] )
 	gulp.watch( config.path.js.src, ['scripts'] );
 });
 /*
 	폴더/파일 제거
 */
 gulp.task('clean', function() {
-	del(['dist/*']);
+	del(['dist/css/*', 'dist/js/*']);
 });
 
 /*
@@ -42,22 +42,22 @@ gulp.task('scripts', ['js:hint', 'js:concat', 'js:uglify']);
 // JS 문법 검사
 gulp.task('js:hint', function() {
 	gulp.src( config.path.js.src )
-			.pipe(jshint())
-			.pipe(jshint.reporter('jshint-stylish'));
+			.pipe( gulpif(config.lint, jshint()) )
+			.pipe( gulpif(config.lint, jshint.reporter('jshint-stylish')) )
 });
 
 // JS 병합
 gulp.task('js:concat', function() {
 	gulp.src( config.path.js.src )
-			.pipe(concat( config.path.js.filename ))
+			.pipe( gulpif(config.concat, concat( config.path.js.filename )))
 			.pipe(gulp.dest( config.path.js.dest ));
 });
 
 // JS 압축
 gulp.task('js:uglify', function() {
 	gulp.src( config.path.js.dest + config.path.js.filename )
-			.pipe(uglify({mangle: false}))
-			.pipe(rename( { suffix: '.min' } ))
+			.pipe( gulpif(config.uglify, uglify({mangle: false})) )
+			.pipe( gulpif(config.rename, rename( { suffix: '.min' } )) )
 			.pipe(gulp.dest( config.path.js.dest ));
 });
 
@@ -71,7 +71,8 @@ gulp.task('styles', ['css:lint', 'css:concat', 'css:uglify']);
 // CSS 문법검사
 gulp.task('css:lint', function() {
 	gulp.src( config.path.css.src )
-			.pipe( csslint() );
+			.pipe( gulpif(config.lint, csslint(config.cssLintRules)) )
+			.pipe( gulpif(config.lint, csslint.reporter()) )
 });
 // CSS 병합
 gulp.task('css:concat', function() {
